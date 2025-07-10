@@ -1,19 +1,14 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
 import React, { useState } from 'react';
-import styled, { keyframes } from 'styled-components';
-
-const fadeOut = keyframes`
-  from { opacity: 1; transform: scale(1); }
-  to { opacity: 0; transform: scale(0.95); }
-`;
+import { useCollapse } from 'react-collapsed';
+import styled from 'styled-components';
 
 const Banner = styled.div`
   font-family: 'Space Grotesk', sans-serif;
   background: white;
   font-size: 1.125rem;
   position: relative;
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  animation: ${({ hidden }) => (hidden ? fadeOut : 'none')} 0.5s forwards;
+  overflow: hidden;
 `;
 
 const Container = styled.div`
@@ -24,33 +19,39 @@ const Container = styled.div`
 `;
 
 const DarkSideBar = styled.div`
-  width: 20px;
+  width: 30px;
   background: #aa1d47;
 `;
 
 const CallToAction = styled.div`
   flex: 2;
-  padding: 2rem 2.5rem;
+  padding: 1rem 3rem;
   display: flex;
   flex-direction: column;
   z-index: 1;
   position: relative;
 
+  h1 {
+    font-size: 2.5rem;
+  }
+
   p {
-    margin-bottom: 1rem;
+    margin: 0.5rem 0;
+    font-size: 1.3rem;
   }
 
   ul {
-    margin-top: 1rem;
+    margin: 0.5rem;
+    font-size: 1.3rem;
   }
 `;
 
 const ChevronWrapper = styled.div`
-  width: 80px;
-  background: linear-gradient(to bottom, #ed225d 0%, #d31f52 100%);
-  clip-path: polygon(0 0, 100% 0, 70% 50%, 100% 100%, 0 100%);
+  width: 90px;
+  background: linear-gradient(to bottom, #ed225d 0%, #aa1d47 100%);
+  clip-path: polygon(0 0, 100% 0, 30% 50%, 100% 100%, 0 100%);
   z-index: 0;
-  transform: rotateY(3.142rad);
+  transform: rotateY(3.142rad); /* keep flip as intended */
   @media (max-width: 850px) {
     display: none;
   }
@@ -58,7 +59,7 @@ const ChevronWrapper = styled.div`
 
 const Action = styled.div`
   flex: 1;
-  padding: 2rem;
+  padding: 4rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -70,6 +71,8 @@ const IntervalSelect = styled.div`
   background: #f1f5f9;
   border-radius: 6px;
   padding: 0.5rem;
+  margin: 0 3rem;
+  font-size: 1.2rem;
 `;
 
 const Interval = styled.div`
@@ -81,7 +84,6 @@ const Interval = styled.div`
 
   &.active {
     background: white;
-    font-weight: bold;
   }
 
   &:hover {
@@ -96,12 +98,13 @@ const AmountSelect = styled.div`
 `;
 
 const Amount = styled.div`
-  padding: 0.5rem 1rem;
+  padding: 1rem;
   text-align: center;
   border-radius: 6px;
   border: 1px solid #94a3b8;
   cursor: pointer;
   background: ${({ active }) => (active ? '#f1f5f9' : 'white')};
+  font-weight: ${({ active }) => (active ? 'bold' : 'normal')};
   transition: background 0.2s, transform 0.1s;
 
   &:hover {
@@ -135,7 +138,7 @@ const DonateButton = styled.button`
 `;
 
 const MoreInfo = styled.div`
-  font-size: 0.9rem;
+  font-size: 1.3rem;
   text-align: center;
   color: #64748b;
 `;
@@ -161,8 +164,10 @@ const CloseButton = styled.button`
 const SkipContainer = styled.button`
   align-self: flex-end;
   margin-top: auto;
+  margin-bottom: 1rem;
   color: #64748b;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 500;
   background: none;
   border: none;
   cursor: pointer;
@@ -175,87 +180,98 @@ const SkipContainer = styled.button`
 
 export default function BannerMockup() {
   const [visible, setVisible] = useState(true);
-  const [hidden, setHidden] = useState(false);
+  const [isExpanded, setExpanded] = useState(true);
+  const { getCollapseProps } = useCollapse({
+    isExpanded,
+    duration: 1500,
+    onCollapseEnd: () => setVisible(false)
+  });
   const [selectedInterval, setSelectedInterval] = useState('monthly');
   const [selectedAmount, setSelectedAmount] = useState(10);
 
   const amounts = [5, 10, 25, 55];
 
-  const closeBanner = () => {
-    setHidden(true);
-    setTimeout(() => setVisible(false), 500);
-  };
+  const closeBanner = () => setExpanded(false);
 
   if (!visible) return null;
 
   return (
-    <Banner hidden={hidden}>
-      <CloseButton onClick={closeBanner}>&times;</CloseButton>
-      <Container>
-        <DarkSideBar />
-        <CallToAction>
-          <h1>👋 😄 Keep p5.js Awesome (and Private)</h1>
-          <p>
-            <strong>Private sketches are coming to p5.js!</strong> Soon you’ll
-            be able to keep your work-in-progress just that: private. Whether
-            you’re a student trying things out, a teacher setting up lessons, or
-            an artist prototyping your next big idea, you’ll be able to sketch
-            in peace, on your own terms.
-          </p>
-          <p>
-            But features like this don’t build themselves. If every caring p5.js
-            creator like you buys us a coffee every month, we’ll be able to keep
-            building:
-          </p>
-          <ul>
-            <li>✏️ Student and teacher-friendly features</li>
-            <li>♿ Accessibility tools for all users</li>
-            <li>⚡ Faster, smoother performance</li>
-            <li>💖 A creative coding platform that’s free and open forever</li>
-          </ul>
-          <SkipContainer onClick={closeBanner}>
-            ✔️ I already donated
-          </SkipContainer>
-        </CallToAction>
+    <div {...getCollapseProps()}>
+      <Banner>
+        <CloseButton onClick={closeBanner}>&times;</CloseButton>
+        <Container>
+          <DarkSideBar />
+          <CallToAction>
+            <h1>👋 😄 Keep p5.js Awesome (and Private)</h1>
+            <p>
+              <strong>Private sketches are coming to p5.js!</strong> Soon you’ll
+              be able to keep your work-in-progress just that: private. Whether
+              you’re a student trying things out, a teacher setting up lessons,
+              or an artist prototyping your next big idea, you’ll be able to
+              sketch on your own terms before sharing with the world.
+            </p>
+            <p>
+              But features like this don’t build themselves. If every caring
+              p5.js creator chips in the cost of a coffee each month, we’ll be
+              able to keep building:
+            </p>
+            <ul>
+              <li>✏️ Student and teacher-friendly features</li>
+              <li>♿ Accessibility tools for all users</li>
+              <li>⚡ Faster, smoother performance</li>
+              <li>
+                💖 A creative coding platform that’s free and open forever
+              </li>
+            </ul>
+            <p>
+              p5.js cares about your data privacy. We don’t collect personal
+              info like gender or birthdate. Learn more about our{' '}
+              <a href="/privacy-policy">Privacy Policy</a>.
+            </p>
+            <SkipContainer onClick={closeBanner}>
+              ✔️ I already donated
+            </SkipContainer>
+          </CallToAction>
 
-        <ChevronWrapper />
+          <ChevronWrapper />
 
-        <Action>
-          <IntervalSelect>
-            <Interval
-              className={selectedInterval === 'onetime' ? 'active' : ''}
-              onClick={() => setSelectedInterval('onetime')}
-            >
-              One-time
-            </Interval>
-            <Interval
-              className={selectedInterval === 'monthly' ? 'active' : ''}
-              onClick={() => setSelectedInterval('monthly')}
-            >
-              ⭐ Monthly
-            </Interval>
-          </IntervalSelect>
-
-          <AmountSelect>
-            {amounts.map((amt) => (
-              <Amount
-                key={amt}
-                active={selectedAmount === amt}
-                onClick={() => setSelectedAmount(amt)}
+          <Action>
+            <IntervalSelect>
+              <Interval
+                className={selectedInterval === 'onetime' ? 'active' : ''}
+                onClick={() => setSelectedInterval('onetime')}
               >
-                ${amt}
-              </Amount>
-            ))}
-            <CustomAmount placeholder="Other amount" />
-          </AmountSelect>
+                One-time
+              </Interval>
+              <Interval
+                className={selectedInterval === 'monthly' ? 'active' : ''}
+                onClick={() => setSelectedInterval('monthly')}
+              >
+                ⭐ Monthly
+              </Interval>
+            </IntervalSelect>
 
-          <DonateButton>Donate Now – it takes 30 seconds!</DonateButton>
-          <MoreInfo>
-            $5 makes a difference. $55 makes our day. <br />
-            Let’s keep creative coding open to all.
-          </MoreInfo>
-        </Action>
-      </Container>
-    </Banner>
+            <AmountSelect>
+              {amounts.map((amt) => (
+                <Amount
+                  key={amt}
+                  active={selectedAmount === amt}
+                  onClick={() => setSelectedAmount(amt)}
+                >
+                  ${amt}
+                </Amount>
+              ))}
+              <CustomAmount placeholder="Other amount" />
+            </AmountSelect>
+
+            <DonateButton>Donate Now – it takes 30 seconds!</DonateButton>
+            <MoreInfo>
+              $5 makes a difference. $55 makes our day. <br />
+              Let’s keep creative coding open to all.
+            </MoreInfo>
+          </Action>
+        </Container>
+      </Banner>
+    </div>
   );
 }
